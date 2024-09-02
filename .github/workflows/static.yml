@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obwiednia ADSR, Filtry i LFO</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .synth-container {
+            background-color: #2d2d2d;
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0px 0px 15px 5px rgba(0,0,0,0.4);
+            display: none;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #ffa500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        p {
+            font-size: 14px;
+            color: #bbbbbb;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            background-color: #ffa500;
+            color: #1e1e1e;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #e69500;
+        }
+
+        .slider-container {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #bbbbbb;
+        }
+
+        input[type="range"], select {
+            width: 100%;
+            height: 5px;
+            -webkit-appearance: none;
+            background: #444444;
+            outline: none;
+            border-radius: 5px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #ffa500;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            background: #ffa500;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        select {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #444444;
+            background-color: #2d2d2d;
+            color: #ffffff;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #ffa500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .section div {
+            flex: 1 1 48%;
+        }
+
+        .section-full {
+            flex: 1 1 100%;
+        }
+
+        .section-full div {
+            margin-bottom: 20px;
+        }
+
+        .sub-section {
+            background-color: #3a3a3a;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .sub-section h3 {
+            font-size: 16px;
+            color: #ffa500;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="toggleButton" onclick="toggleInterface()">Pokaż Interfejs</button>
+    <button id="hideButton" style="display: none;" onclick="toggleInterface()">Ukryj Interfejs</button>
+
+    <div class="synth-container" id="synthContainer">
+        <h1>Obwiednia ADSR, Filtry i LFO</h1>
+
+        <div class="section">
+            <div>
+                <div class="slider-container">
+                    <label for="volumeSlider">Głośność:</label>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5" onchange="updateVolume()">
+                </div>
+                <div class="slider-container">
+                    <label for="waveTypeSlider">Wybór fali:</label>
+                    <input type="range" id="waveTypeSlider" min="0" max="3" step="1" value="0" onchange="updateWaveType()">
+                    <p id="waveTypeDisplay">Typ fali: Sine</p>
+                </div>
+                <div class="slider-container">
+                    <label for="frequencySlider">Częstotliwość (Hz):</label>
+                    <input type="range" id="frequencySlider" min="20" max="2000" step="1" value="440" onchange="updateFrequency()">
+                </div>
+            </div>
+
+            <div>
+                <div class="slider-container">
+                    <label for="modulationFrequencySlider">Częstotliwość modulacji (Hz):</label>
+                    <input type="range" id="modulationFrequencySlider" min="0.1" max="5000" step="1" value="1" onchange="updateModulation()">
+                </div>
+                <div class="slider-container">
+                    <label for="modulationDepthSlider">Głębokość modulacji:</label>
+                    <input type="range" id="modulationDepthSlider" min="0" max="500" step="1" value="100" onchange="updateModulation()">
+                </div>
+                <div class="slider-container">
+                    <label for="filterType">Typ Filtra:</label>
+                    <select id="filterType" onchange="updateFilterType()">
+                        <option value="lowpass">Lowpass</option>
+                        <option value="highpass">Highpass</option>
+                        <option value="bandpass">Bandpass</option>
+                        <option value="notch">Notch</option>
+                        <option value="peaking">Peaking</option>
+                        <option value="allpass">Allpass</option>
+                        <option value="comb">Comb (przykładowy)</option>
+                        <option value="scream">Scream (przykładowy)</option>
+                    </select>
+                    <p id="filterTypeDisplay">Typ filtra: Lowpass</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-full">
+            <div class="slider-container">
+                <label for="filterFrequencySlider">Częstotliwość filtra (Hz):</label>
+                <input type="range" id="filterFrequencySlider" min="20" max="20000" step="1" value="1000" onchange="updateFilter()">
+            </div>
+            <div class="slider-container">
+                <label for="filterQSlider">Q filtra (rezonans):</label>
+                <input type="range" id="filterQSlider" min="0.1" max="30" step="0.1" value="1" onchange="updateFilter()">
+            </div>
+            <div class="slider-container">
+                <label for="filterGainSlider">Wzmocnienie filtra (dB):</label>
+                <input type="range" id="filterGainSlider" min="-40" max="40" step="1" value="0" onchange="updateFilter()">
+            </div>
+        </div>
+
+        <div class="section-full">
+            <div class="sub-section">
+                <h3>Parametry LFO 1 (Oscylator)</h3>
+                <div class="slider-container">
+                    <label for="lfoWaveType">Typ fali LFO:</label>
+                    <select id="lfoWaveType" onchange="updateLfoWaveType()">
+                        <option value="sine">Sine</option>
+                        <option value="square">Square</option>
+                        <option value="sawtooth">Sawtooth</option>
+                        <option value="triangle">Triangle</option>
+                    </select>
+                    <p id="lfoWaveTypeDisplay">Typ fali LFO: Sine</p>
+                </div>
+                <div class="slider-container">
+                    <label for="lfoFrequencySlider">Częstotliwość LFO (Hz):</label>
+                    <input type="range" id="lfoFrequencySlider" min="0.1" max="20" step="0.1" value="1" onchange="updateLfoFrequency()">
+                </div>
+                <div class="slider-container">
+                    <label for="lfoDepthSlider">Głębokość LFO:</label>
+                    <input type="range" id="lfoDepthSlider" min="0" max="500" step="1" value="100" onchange="updateLfoDepth()">
+                </div>
+                <div class="slider-container">
+                    <label for="lfoTarget">Modulowany parametr:</label>
+                    <select id="lfoTarget" onchange="updateLfoTarget()">
+                        <option value="frequency">Częstotliwość</option>
+                        <option value="amplitude">Amplituda</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h3>Parametry LFO 2 (Filtr)</h3>
+                <div class="slider-container">
+                    <label for="lfoFilterWaveType">Typ fali LFO:</label>
+                    <select id="lfoFilterWaveType" onchange="updateLfoFilterWaveType()">
+                        <option value="sine">Sine</option>
+                        <option value="square">Square</option>
+                        <option value="sawtooth">Sawtooth</option>
+                        <option value="triangle">Triangle</option>
+                    </select>
+                    <p id="lfoFilterWaveTypeDisplay">Typ fali LFO: Sine</p>
+                </div>
+                <div class="slider-container">
+                    <label for="lfoFilterFrequencySlider">Częstotliwość LFO (Hz):</label>
+                    <input type="range" id="lfoFilterFrequencySlider" min="0.1" max="20" step="0.1" value="1" onchange="updateLfoFilterFrequency()">
+                </div>
+                <div class="slider-container">
+                    <label for="lfoFilterDepthSlider">Głębokość LFO:</label>
+                    <input type="range" id="lfoFilterDepthSlider" min="0" max="500" step="1" value="100" onchange="updateLfoFilterDepth()">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-full">
+            <div class="sub-section">
+                <h3>Parametry Obwiedni ADSR</h3>
+                <div class="slider-container">
+                    <label for="attackSlider">Atak (s):</label>
+                    <input type="range" id="attackSlider" min="0" max="1" step="0.01" value="0.1">
+                </div>
+                <div class="slider-container">
+                    <label for="decaySlider">Opadanie (s):</label>
+                    <input type="range" id="decaySlider" min="0" max="1" step="0.01" value="0.1">
+                </div>
+                <div class="slider-container">
+                    <label for="sustainSlider">Sustain (poziom):</label>
+                    <input type="range" id="sustainSlider" min="0" max="1" step="0.01" value="0.7">
+                </div>
+                <div class="slider-container">
+                    <label for="releaseSlider">Zwolnienie (s):</label>
+                    <input type="range" id="releaseSlider" min="0" max="1" step="0.01" value="0.5">
+                </div>
+            </div>
+        </div>
+
+        <button id="playButton" onclick="startSound()">Odtwórz Dźwięk</button>
+        <button id="stopButton" style="display:none;" onclick="stopSound()">Zatrzymaj Dźwięk</button>
+        <button id="randfmButton" onclick="randomizeParameters()">Randfm</button>
+    </div>
+
+    <script>
+        let audioContext;
+        let gainNode;
+        let oscillatorNode;
+        let modulationOscillator;
+        let modulationGainNode;
+        let filterNode;
+        let lfo, lfo2;
+        let lfoGainNode, lfoFilterGainNode;
+        let lfoTarget = 'frequency';
+        let waveTypes = ['sine', 'square', 'sawtooth', 'triangle'];
+        let selectedWaveType = waveTypes[0];
+        let selectedFilterType = "lowpass";
+
+        function toggleInterface() {
+            const synthContainer = document.getElementById('synthContainer');
+            const toggleButton = document.getElementById('toggleButton');
+            const hideButton = document.getElementById('hideButton');
+
+            if (synthContainer.style.display === "none") {
+                synthContainer.style.display = "block";
+                toggleButton.style.display = "none";
+                hideButton.style.display = "inline-block";
+            } else {
+                synthContainer.style.display = "none";
+                toggleButton.style.display = "inline-block";
+                hideButton.style.display = "none";
+            }
+        }
+
+        function startSound() {
+            stopSound(); // Stop any currently playing sound
+
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Create gain node and set initial volume
+            gainNode = audioContext.createGain();
+            gainNode.gain.setValueAtTime(parseFloat(document.getElementById('volumeSlider').value), audioContext.currentTime);
+
+            oscillatorNode = audioContext.createOscillator();
+            oscillatorNode.type = selectedWaveType;
+            oscillatorNode.frequency.setValueAtTime(document.getElementById('frequencySlider').value, audioContext.currentTime);
+
+            updateFilterType();
+
+            modulationOscillator = audioContext.createOscillator();
+            modulationOscillator.frequency.value = document.getElementById('modulationFrequencySlider').value;
+
+            modulationGainNode = audioContext.createGain();
+            modulationGainNode.gain.value = document.getElementById('modulationDepthSlider').value;
+
+            modulationOscillator.connect(modulationGainNode);
+            modulationGainNode.connect(oscillatorNode.frequency);
+
+            oscillatorNode.connect(filterNode);
+            filterNode.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Set up LFO for Oscillator
+            lfo = audioContext.createOscillator();
+            lfoGainNode = audioContext.createGain();
+            lfo.type = document.getElementById('lfoWaveType').value;
+            lfo.frequency.value = document.getElementById('lfoFrequencySlider').value;
+            lfoGainNode.gain.value = document.getElementById('lfoDepthSlider').value;
+
+            if (lfoTarget === 'frequency') {
+                lfo.connect(lfoGainNode).connect(oscillatorNode.frequency);
+            } else {
+                lfo.connect(lfoGainNode).connect(gainNode.gain);
+            }
+
+            // Set up LFO for Filter
+            lfo2 = audioContext.createOscillator();
+            lfoFilterGainNode = audioContext.createGain();
+            lfo2.type = document.getElementById('lfoFilterWaveType').value;
+            lfo2.frequency.value = document.getElementById('lfoFilterFrequencySlider').value;
+            lfoFilterGainNode.gain.value = document.getElementById('lfoFilterDepthSlider').value;
+
+            lfo2.connect(lfoFilterGainNode).connect(filterNode.frequency);
+
+            oscillatorNode.start();
+            modulationOscillator.start();
+            lfo.start();
+            lfo2.start();
+
+            applyADSR();
+
+            // Show Stop Button and Hide Play Button
+            document.getElementById('playButton').style.display = 'none';
+            document.getElementById('stopButton').style.display = 'inline-block';
+        }
+
+        function stopSound() {
+            if (oscillatorNode) {
+                oscillatorNode.stop();
+            }
+            if (modulationOscillator) {
+                modulationOscillator.stop();
+            }
+            if (lfo) {
+                lfo.stop();
+            }
+            if (lfo2) {
+                lfo2.stop();
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+            oscillatorNode = null;
+            modulationOscillator = null;
+            lfo = null;
+            lfo2 = null;
+            audioContext = null;
+
+            // Show Play Button and Hide Stop Button
+            document.getElementById('playButton').style.display = 'inline-block';
+            document.getElementById('stopButton').style.display = 'none';
+        }
+
+        function updateWaveType() {
+            const waveIndex = document.getElementById('waveTypeSlider').value;
+            selectedWaveType = waveTypes[waveIndex];
+            document.getElementById('waveTypeDisplay').innerText = `Typ fali: ${selectedWaveType.charAt(0).toUpperCase() + selectedWaveType.slice(1)}`;
+            if (oscillatorNode) {
+                oscillatorNode.type = selectedWaveType;
+            }
+        }
+
+        function updateVolume() {
+            const volumeSliderValue = parseFloat(document.getElementById('volumeSlider').value);
+            if (gainNode) {
+                gainNode.gain.setValueAtTime(volumeSliderValue, audioContext.currentTime);
+            }
+        }
+
+        function updateFrequency() {
+            if (oscillatorNode) {
+                oscillatorNode.frequency.setValueAtTime(document.getElementById('frequencySlider').value, audioContext.currentTime);
+            }
+        }
+
+        function updateModulation() {
+            if (modulationOscillator && modulationGainNode) {
+                modulationOscillator.frequency.setValueAtTime(document.getElementById('modulationFrequencySlider').value, audioContext.currentTime);
+                modulationGainNode.gain.setValueAtTime(document.getElementById('modulationDepthSlider').value, audioContext.currentTime);
+            }
+        }
+
+        function updateFilterType() {
+            if (filterNode) {
+                filterNode.disconnect();
+            }
+
+            selectedFilterType = document.getElementById('filterType').value;
+            document.getElementById('filterTypeDisplay').innerText = `Typ filtra: ${selectedFilterType.charAt(0).toUpperCase() + selectedFilterType.slice(1)}`;
+
+            filterNode = audioContext.createBiquadFilter();
+            filterNode.type = selectedFilterType;
+
+            updateFilter();
+            if (oscillatorNode && gainNode) {
+                oscillatorNode.connect(filterNode);
+                filterNode.connect(gainNode);
+            }
+        }
+
+        function updateFilter() {
+            if (filterNode) {
+                filterNode.frequency.setValueAtTime(document.getElementById('filterFrequencySlider').value, audioContext.currentTime);
+                filterNode.Q.value = document.getElementById('filterQSlider').value;
+                filterNode.gain.value = document.getElementById('filterGainSlider').value;
+            }
+        }
+
+        function applyADSR() {
+            const now = audioContext.currentTime;
+            const attack = parseFloat(document.getElementById('attackSlider').value);
+            const decay = parseFloat(document.getElementById('decaySlider').value);
+            const sustain = parseFloat(document.getElementById('sustainSlider').value);
+            const release = parseFloat(document.getElementById('releaseSlider').value);
+
+            gainNode.gain.cancelScheduledValues(now);
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(1, now + attack);
+            gainNode.gain.linearRampToValueAtTime(sustain, now + attack + decay);
+
+            // Utrzymywanie poziomu sustain do czasu zakończenia release
+            gainNode.gain.setValueAtTime(sustain, now + attack + decay);
+            gainNode.gain.linearRampToValueAtTime(0, now + attack + decay + release);
+
+            setTimeout(stopSound, (attack + decay + sustain + release) * 1000); // Uwzględnienie czasu sustain w zatrzymaniu dźwięku
+        }
+
+        function randomizeParameters() {
+            // Randomize Wave Type
+            const waveTypeSlider = document.getElementById('waveTypeSlider');
+            waveTypeSlider.value = Math.floor(Math.random() * waveTypes.length);
+            updateWaveType();
+
+            // Randomize Frequency
+            const frequencySlider = document.getElementById('frequencySlider');
+            frequencySlider.value = Math.floor(Math.random() * (2000 - 20 + 1)) + 20;
+            updateFrequency();
+
+            // Randomize Modulation Frequency
+            const modulationFrequencySlider = document.getElementById('modulationFrequencySlider');
+            modulationFrequencySlider.value = Math.floor(Math.random() * (5000 - 1 + 1)) + 1;
+            updateModulation();
+
+            // Randomize Modulation Depth
+            const modulationDepthSlider = document.getElementById('modulationDepthSlider');
+            modulationDepthSlider.value = Math.floor(Math.random() * (500 + 1));
+            updateModulation();
+
+            // Randomize Filter Type
+            const filterType = document.getElementById('filterType');
+            filterType.selectedIndex = Math.floor(Math.random() * filterType.options.length);
+            updateFilterType();
+
+            // Randomize Filter Frequency
+            const filterFrequencySlider = document.getElementById('filterFrequencySlider');
+            filterFrequencySlider.value = Math.floor(Math.random() * (20000 - 20 + 1)) + 20;
+            updateFilter();
+
+            // Randomize Filter Q
+            const filterQSlider = document.getElementById('filterQSlider');
+            filterQSlider.value = (Math.random() * 29.9 + 0.1).toFixed(1); // Random value between 0.1 and 30
+            updateFilter();
+
+            // Randomize Filter Gain
+            const filterGainSlider = document.getElementById('filterGainSlider');
+            filterGainSlider.value = Math.floor(Math.random() * (40 + 40 + 1)) - 40; // Random value between -40 and 40
+            updateFilter();
+
+            // Randomize ADSR Parameters
+            const attackSlider = document.getElementById('attackSlider');
+            attackSlider.value = (Math.random()).toFixed(2); // Random value between 0 and 1
+            const decaySlider = document.getElementById('decaySlider');
+            decaySlider.value = (Math.random()).toFixed(2); // Random value between 0 and 1
+            const sustainSlider = document.getElementById('sustainSlider');
+            sustainSlider.value = (Math.random()).toFixed(2); // Random value between 0 and 1
+            const releaseSlider = document.getElementById('releaseSlider');
+            releaseSlider.value = (Math.random()).toFixed(2); // Random value between 0 and 1
+
+            // Randomize LFO 1 Parameters
+            const lfoWaveType = document.getElementById('lfoWaveType');
+            lfoWaveType.selectedIndex = Math.floor(Math.random() * lfoWaveType.options.length);
+            updateLfoWaveType();
+
+            const lfoFrequencySlider = document.getElementById('lfoFrequencySlider');
+            lfoFrequencySlider.value = (Math.random() * 19.9 + 0.1).toFixed(1); // Random value between 0.1 and 20
+            updateLfoFrequency();
+
+            const lfoDepthSlider = document.getElementById('lfoDepthSlider');
+            lfoDepthSlider.value = Math.floor(Math.random() * (500 + 1));
+            updateLfoDepth();
+
+            // Randomize LFO 2 Parameters
+            const lfoFilterWaveType = document.getElementById('lfoFilterWaveType');
+            lfoFilterWaveType.selectedIndex = Math.floor(Math.random() * lfoFilterWaveType.options.length);
+            updateLfoFilterWaveType();
+
+            const lfoFilterFrequencySlider = document.getElementById('lfoFilterFrequencySlider');
+            lfoFilterFrequencySlider.value = (Math.random() * 19.9 + 0.1).toFixed(1); // Random value between 0.1 and 20
+            updateLfoFilterFrequency();
+
+            const lfoFilterDepthSlider = document.getElementById('lfoFilterDepthSlider');
+            lfoFilterDepthSlider.value = Math.floor(Math.random() * (500 + 1));
+            updateLfoFilterDepth();
+        }
+
+        function updateLfoWaveType() {
+            const lfoWaveType = document.getElementById('lfoWaveType').value;
+            document.getElementById('lfoWaveTypeDisplay').innerText = `Typ fali LFO: ${lfoWaveType.charAt(0).toUpperCase() + lfoWaveType.slice(1)}`;
+            if (lfo) {
+                lfo.type = lfoWaveType;
+            }
+        }
+
+        function updateLfoFrequency() {
+            if (lfo) {
+                lfo.frequency.setValueAtTime(document.getElementById('lfoFrequencySlider').value, audioContext.currentTime);
+            }
+        }
+
+        function updateLfoDepth() {
+            if (lfoGainNode) {
+                lfoGainNode.gain.setValueAtTime(document.getElementById('lfoDepthSlider').value, audioContext.currentTime);
+            }
+        }
+
+        function updateLfoTarget() {
+            lfoTarget = document.getElementById('lfoTarget').value;
+            if (audioContext) {
+                startSound(); // Restart the sound to apply the new LFO target
+            }
+        }
+
+        function updateLfoFilterWaveType() {
+            const lfoFilterWaveType = document.getElementById('lfoFilterWaveType').value;
+            document.getElementById('lfoFilterWaveTypeDisplay').innerText = `Typ fali LFO: ${lfoFilterWaveType.charAt(0).toUpperCase() + lfoFilterWaveType.slice(1)}`;
+            if (lfo2) {
+                lfo2.type = lfoFilterWaveType;
+            }
+        }
+
+        function updateLfoFilterFrequency() {
+            if (lfo2) {
+                lfo2.frequency.setValueAtTime(document.getElementById('lfoFilterFrequencySlider').value, audioContext.currentTime);
+            }
+        }
+
+        function updateLfoFilterDepth() {
+            if (lfoFilterGainNode) {
+                lfoFilterGainNode.gain.setValueAtTime(document.getElementById('lfoFilterDepthSlider').value, audioContext.currentTime);
+            }
+        }
+    </script>
+
+</body>
+</html>
